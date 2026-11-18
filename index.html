@@ -4135,6 +4135,23 @@
             /* ==================================================================
             * 8. Markdown 渲染
             * ================================================================== */
+            if (typeof marked !== 'undefined') {
+                marked.use({
+                    tokenizer: {
+                        del(src) {
+                            // 只匹配 ~~...~~，且两端紧邻非空白（符合 GFM）
+                            const m = /^~~(?=\S)([\s\S]*?\S)~~/.exec(src);
+                            if (!m) return undefined;
+                            return {
+                                type: 'del',
+                                raw: m[0],
+                                text: m[1],
+                                tokens: this.lexer.inlineTokens(m[1]),
+                            };
+                        },
+                    },
+                });
+            }
             function renderMarkdown(text) {
                 const src = String(text);
                 const fallback = `<p>${escapeHtml(src).replace(/\n/g, '<br>')}</p>`;
@@ -4165,8 +4182,9 @@
                 // 2. sanitize 之后再插入 KaTeX 生成的 HTML（库自己转义过，可信）
                 return restoreMath(html, store);
             }
-            /* ==================== 数学公式 ==================== */
-            // 用私用区字符做占位符，不会被 marked 或 DOMPurify 改动
+            /* ================================================= 
+            *  8.1. 数学公式 
+            * =================================================*/
             const MATH_TOKEN_OPEN = '\uE000';
             const MATH_TOKEN_CLOSE = '\uE000';
             const KATEX_CACHE = new Map();

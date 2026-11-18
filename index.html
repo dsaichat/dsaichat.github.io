@@ -780,6 +780,123 @@
             user-select: none;
         }
 
+        /* DeepSeek 服务端联网工具返回的参考来源（默认折叠） */
+        .server-sources {
+            margin: 8px 0 2px;
+            padding-top: 6px;
+            border-top: 1px dashed var(--border);
+            display: flex;
+            flex-direction: column;
+            align-self: stretch;
+        }
+
+        .server-sources.collapsed {
+            margin-top: 4px;
+            padding-top: 4px;
+        }
+
+        .server-sources-head {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            width: 100%;
+            min-height: 24px;
+            padding: 3px 6px;
+            margin: 0;
+            border: 0;
+            border-radius: 6px;
+            background: transparent;
+            color: var(--text-dim);
+            font: inherit;
+            text-align: left;
+            cursor: pointer;
+        }
+
+        .server-sources-head:hover {
+            background: var(--bg-hover);
+            color: var(--text);
+        }
+
+        .server-sources-head:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 1px;
+        }
+
+        .server-sources-chevron {
+            display: inline-flex;
+            flex: none;
+            width: 12px;
+            height: 12px;
+            color: var(--text-mute);
+            transition: transform .2s cubic-bezier(.3, .8, .3, 1);
+        }
+
+        .server-sources-chevron svg {
+            width: 12px;
+            height: 12px;
+        }
+
+        .server-sources:not(.collapsed) .server-sources-chevron {
+            transform: rotate(90deg);
+        }
+
+        .server-sources-title {
+            font-size: 11.5px;
+            font-weight: 600;
+            color: var(--text-mute);
+            white-space: nowrap;
+        }
+
+        .server-sources-hint {
+            margin-left: auto;
+            font-size: 10.5px;
+            color: var(--text-mute);
+            white-space: nowrap;
+        }
+
+        .server-sources-list {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            padding-top: 4px;
+        }
+
+        .server-sources.collapsed .server-sources-list {
+            display: none;
+        }
+
+        .server-source {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            min-width: 0;
+            padding: 4px 8px;
+            border-radius: 7px;
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 12.5px;
+            line-height: 1.45;
+            background: var(--bg-hover);
+        }
+
+        .server-source:hover {
+            background: var(--bg-active);
+        }
+
+        .server-source-title {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .server-source-site {
+            flex: none;
+            margin-left: auto;
+            color: var(--text-dim);
+            font-size: 11px;
+        }
+
         .tool-head:hover {
             background: var(--bg-active);
             color: var(--text);
@@ -1172,6 +1289,38 @@
         }
 
         /* ==================== KaTeX ==================== */
+        /* 公式占位符：KaTeX 渲染前的轻量文本，避免大量公式同步渲染卡住页面 */
+        .md .math-slot {
+            display: inline;
+        }
+
+        .md .math-slot.math-display {
+            display: block;
+            margin: 12px 0;
+            text-align: center;
+        }
+
+        .md .math-slot.math-display>.katex-display {
+            margin: 0;
+        }
+
+        .md .math-slot:not(.math-done) {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Courier New", monospace;
+            font-size: .92em;
+            color: var(--text-dim);
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .md .math-limit-hint {
+            margin: 10px 0 0;
+            padding: 6px 10px;
+            border-radius: 8px;
+            background: var(--bg-hover);
+            color: var(--text-mute);
+            font-size: 12px;
+        }
+
         .md .katex {
             font-size: 1.06em;
             color: var(--text);
@@ -1190,7 +1339,8 @@
         }
 
         /* display 公式独占一段时，去掉外层 p 的多余间距 */
-        .md p:has(> .katex-display:only-child) {
+        .md p:has(> .katex-display:only-child),
+        .md p:has(> .math-slot.math-display:only-child) {
             margin: 0;
         }
 
@@ -3318,6 +3468,9 @@
                     temperature: 1.0,
                     max_tokens: 393216,
                     reasoning_effort: 'high',
+                    /* ---------- DeepSeek 服务端联网工具（默认关闭） ---------- */
+                    server_web_search: false,
+                    server_read_url: false,
                     /* ---------- 高级选项（默认隐藏） ---------- */
                     advanced: false,
                     thinking_mode: 'auto',
@@ -3341,6 +3494,8 @@
                     temperature: 0.7,
                     max_tokens: 32768,
                     reasoning_effort: '',
+                    server_web_search: false,
+                    server_read_url: false,
                     advanced: false,
                     thinking_mode: 'auto',
                     top_p: '',
@@ -3359,6 +3514,8 @@
                 name: '新服务商', api_key: '', base_url: 'https://api.openai.com/v1',
                 model: 'gpt-4o-mini', api_mode: 'chat',
                 temperature: 0.7, max_tokens: CONFIG.DEFAULT_MAX_TOKENS, reasoning_effort: '',
+                server_web_search: false,
+                server_read_url: false,
                 advanced: false,
                 thinking_mode: 'auto',
                 top_p: '',
@@ -3690,6 +3847,17 @@
                 if (data.finalReasoning) {
                     node.finalReasoning = data.finalReasoning;
                 }
+                if (Array.isArray(data.serverToolCalls) && data.serverToolCalls.length) {
+                    // DeepSeek Chat 服务端联网工具的扩展字段，多轮对话必须原样回传
+                    node.serverToolCalls = data.serverToolCalls;
+                }
+                if (Array.isArray(data.annotations) && data.annotations.length) {
+                    node.annotations = data.annotations;
+                }
+                if (Array.isArray(data.serverSources) && data.serverSources.length) {
+                    // 仅用于界面展示的参考来源，不参与 API 回放
+                    node.serverSources = data.serverSources;
+                }
                 conv.nodes[id] = node;
                 conv.children[id] = [];
                 const list = conv.children[pid] || (conv.children[pid] = []);
@@ -3901,6 +4069,9 @@
                     temperature: Number.isFinite(temp) ? clamp(temp, 0, 2) : 0.7,
                     max_tokens: maxTokens,
                     reasoning_effort: isValidEffort(p.reasoning_effort) ? p.reasoning_effort : '',
+                    /* ---------- DeepSeek 服务端联网工具 ---------- */
+                    server_web_search: p.server_web_search === true,
+                    server_read_url: p.server_read_url === true,
                     /* ---------- DeepSeek 高级选项 ---------- */
                     advanced: p.advanced === true,
                     thinking_mode: THINKING_MODES.includes(p.thinking_mode) ? p.thinking_mode : 'auto',
@@ -4152,17 +4323,28 @@
                     },
                 });
             }
-            function renderMarkdown(text) {
+            /**
+             * 渲染 Markdown。
+             * 公式只在这里生成占位符，真正的 KaTeX 渲染由 postRender 之后的
+             * scheduleMathRender 分片完成，避免大量公式同步计算导致页面卡死。
+             *
+             * @param {string} text Markdown 原文
+             * @param {{ math?: boolean }} options math=false 时跳过公式处理（流式输出使用）
+             */
+            function renderMarkdown(text, options = {}) {
                 const src = String(text);
                 const fallback = `<p>${escapeHtml(src).replace(/\n/g, '<br>')}</p>`;
                 if (typeof marked === 'undefined') return fallback;
 
-                // 1. 先把公式抽出来换成占位符，避免被 Markdown 语法破坏
-                const { text: protectedText, store } = protectMath(src);
+                // 流式输出时公式会随每个 chunk 重绘，跳过 KaTeX，结束后再统一渲染一次
+                const mathEnabled = options.math !== false;
+                const mathResult = mathEnabled
+                    ? protectMath(src)
+                    : { text: src, store: [], limited: false };
 
                 let html;
                 try {
-                    html = marked.parse(protectedText, { gfm: true, breaks: true });
+                    html = marked.parse(mathResult.text, { gfm: true, breaks: true });
                 } catch (e) {
                     console.warn('Markdown 解析失败:', e);
                     return fallback;
@@ -4178,16 +4360,34 @@
                     console.warn('HTML 清洗失败:', e);
                     return fallback;
                 }
+                if (!mathEnabled) return html;
 
-                // 2. sanitize 之后再插入 KaTeX 生成的 HTML（库自己转义过，可信）
-                return restoreMath(html, store);
+                // 公式占位符在 sanitize 之后再替换，生成的是可信的 KaTeX 容器
+                html = restoreMath(html, mathResult.store);
+                if (mathResult.limited) {
+                    html += '<p class="math-limit-hint">公式内容过多或单个公式过长，部分公式未渲染。</p>';
+                }
+                return html;
             }
-            /* ================================================= 
-            *  8.1. 数学公式 
-            * =================================================*/
-            const MATH_TOKEN_OPEN = '\uE000';
-            const MATH_TOKEN_CLOSE = '\uE000';
+            /* ==================================================================
+            * 8.1 数学公式（KaTeX）
+            * ================================================================== */
+            /**
+             * KaTeX 渲染策略：
+             * 1. protectMath 只把公式替换成轻量占位符，不执行任何 KaTeX 计算；
+             * 2. postRender 之后由 scheduleMathRender 在空闲时间按时间片渲染；
+             * 3. 单条消息的公式数量、单个公式长度、原文长度都有上限，防止恶意/极端内容卡死页面。
+             */
+            const MATH = {
+                MAX_ITEMS: 5000,
+                MAX_TEX_LEN: 5000,
+                MAX_SOURCE_LEN: 300000,
+                CHUNK_BUDGET_MS: 8,
+                OPEN: '\uE000',
+                CLOSE: '\uE001',
+            };
             const KATEX_CACHE = new Map();
+            const KATEX_CACHE_MAX = 600;
 
             function renderTex(tex, display) {
                 const key = (display ? 'D' : 'I') + tex;
@@ -4211,20 +4411,29 @@
                         html = escapeHtml(tex);
                     }
                 }
-                if (KATEX_CACHE.size > 600) KATEX_CACHE.clear();
+                if (KATEX_CACHE.size >= KATEX_CACHE_MAX) KATEX_CACHE.clear();
                 KATEX_CACHE.set(key, html);
                 return html;
             }
 
             /**
-             * 把公式替换成占位符，返回 { text, store }
-             * 会跳过围栏代码块、行内代码，避免误伤 $ 和反斜杠
+             * 将公式替换为安全占位符，返回 { text, store, limited }。
+             * 会跳过围栏代码块与行内代码，避免误伤代码里的 $ 和反斜杠。
+             * 遇到未闭合的块级公式时直接结束扫描，避免逐字符重复查找造成 O(n²) 卡顿。
              */
             function protectMath(src) {
                 const store = [];
+                let limited = false;
+                if (src.length > MATH.MAX_SOURCE_LEN) {
+                    return { text: src, store, limited: true };
+                }
                 const token = (tex, display) => {
+                    if (store.length >= MATH.MAX_ITEMS || tex.length > MATH.MAX_TEX_LEN) {
+                        limited = true;
+                        return null;
+                    }
                     store.push({ tex, display });
-                    return MATH_TOKEN_OPEN + 'MATH' + (store.length - 1) + MATH_TOKEN_CLOSE;
+                    return MATH.OPEN + 'MATH' + (store.length - 1) + MATH.CLOSE;
                 };
                 const len = src.length;
                 let out = '';
@@ -4232,6 +4441,13 @@
                 let fence = null; // 当前围栏标记，如 '```' 或 '~~~'
 
                 while (i < len) {
+                    // 达到单条消息的公式上限后，剩余内容原样保留，不再做公式解析
+                    if (store.length >= MATH.MAX_ITEMS) {
+                        out += src.slice(i);
+                        limited = true;
+                        break;
+                    }
+
                     // 行首：处理围栏代码块
                     if (i === 0 || src[i - 1] === '\n') {
                         let lineEnd = src.indexOf('\n', i);
@@ -4280,31 +4496,44 @@
                     // $$ ... $$
                     if (src[i] === '$' && src[i + 1] === '$') {
                         const close = src.indexOf('$$', i + 2);
-                        if (close !== -1) {
-                            out += token(src.slice(i + 2, close).trim(), true);
-                            i = close + 2;
-                            continue;
+                        if (close === -1) {
+                            // 后面没有闭合符，剩余内容不可能再构成块级公式
+                            out += src.slice(i);
+                            break;
                         }
+                        const tex = src.slice(i + 2, close).trim();
+                        const tok = token(tex, true);
+                        out += tok || src.slice(i, close + 2);
+                        i = close + 2;
+                        continue;
                     }
 
                     // \[ ... \]
                     if (src[i] === '\\' && src[i + 1] === '[') {
                         const close = src.indexOf('\\]', i + 2);
-                        if (close !== -1) {
-                            out += token(src.slice(i + 2, close).trim(), true);
-                            i = close + 2;
-                            continue;
+                        if (close === -1) {
+                            out += src.slice(i);
+                            break;
                         }
+                        const tex = src.slice(i + 2, close).trim();
+                        const tok = token(tex, true);
+                        out += tok || src.slice(i, close + 2);
+                        i = close + 2;
+                        continue;
                     }
 
                     // \( ... \)
                     if (src[i] === '\\' && src[i + 1] === '(') {
                         const close = src.indexOf('\\)', i + 2);
-                        if (close !== -1) {
-                            out += token(src.slice(i + 2, close).trim(), false);
-                            i = close + 2;
-                            continue;
+                        if (close === -1) {
+                            out += src.slice(i);
+                            break;
                         }
+                        const tex = src.slice(i + 2, close).trim();
+                        const tok = token(tex, false);
+                        out += tok || src.slice(i, close + 2);
+                        i = close + 2;
+                        continue;
                     }
 
                     // $ ... $（行内）
@@ -4321,26 +4550,103 @@
                                 const okAfter = !(afterCh && /[0-9]/.test(afterCh));    // 避免 $5 到 $10
                                 const okTex = tex.length > 0 && !/\s$/.test(tex);
                                 if (okPrev && okAfter && okTex) {
-                                    out += token(tex, false);
+                                    const tok = token(tex, false);
+                                    out += tok || src.slice(i, j + 1);
                                     i = j + 1;
                                     continue;
                                 }
+                            } else {
+                                // 当前行没有闭合 $：一次性跳过，避免对同一行的每个 $ 重复扫描
+                                out += src.slice(i, j);
+                                i = j;
+                                continue;
                             }
                         }
                     }
 
                     out += src[i++];
                 }
-                return { text: out, store };
+                return { text: out, store, limited };
             }
 
+            /**
+             * 把占位符替换成 .math-slot 容器。
+             * 真正的 KaTeX HTML 延迟到 scheduleMathRender 中分批写入，
+             * 因此 restoreMath 本身只做字符串替换，开销很小。
+             */
             function restoreMath(html, store) {
                 if (!store.length) return html;
-                const re = new RegExp(MATH_TOKEN_OPEN + 'MATH(\\d+)' + MATH_TOKEN_CLOSE, 'g');
+                const re = new RegExp(MATH.OPEN + 'MATH(\\d+)' + MATH.CLOSE, 'g');
                 return html.replace(re, (m, idx) => {
                     const item = store[Number(idx)];
-                    return item ? renderTex(item.tex, item.display) : m;
+                    if (!item) return m;
+                    const raw = item.display ? `$$${item.tex}$$` : `$${item.tex}$`;
+                    return `<span class="math-slot${item.display ? ' math-display' : ''}"`
+                        + ` data-math-tex="${escapeHtml(item.tex)}"`
+                        + ` data-math-display="${item.display ? '1' : '0'}">`
+                        + `${escapeHtml(raw)}</span>`;
                 });
+            }
+
+            /* ---------- 公式渲染队列：按时间片逐步渲染，避免一次性阻塞主线程 ---------- */
+            const mathQueue = [];
+            let mathQueueRunning = false;
+
+            function renderMathSlot(el) {
+                if (!el || el.classList.contains('math-done')) return;
+                const tex = el.getAttribute('data-math-tex') || '';
+                const display = el.getAttribute('data-math-display') === '1';
+                try {
+                    el.innerHTML = renderTex(tex, display);
+                } catch (e) {
+                    el.textContent = tex;
+                }
+                el.classList.add('math-done');
+                // 渲染完成后不再需要原始 TeX 属性，释放 DOM 内存
+                el.removeAttribute('data-math-tex');
+                el.removeAttribute('data-math-display');
+            }
+
+            const scheduleMathTask = (callback) => {
+                if (typeof window !== 'undefined' && typeof window.requestIdleCallback === 'function') {
+                    window.requestIdleCallback(callback, { timeout: 200 });
+                } else {
+                    setTimeout(callback, 0);
+                }
+            };
+
+            function pumpMathQueue() {
+                if (mathQueueRunning || !mathQueue.length) return;
+                mathQueueRunning = true;
+                scheduleMathTask(() => {
+                    const startedAt = performance.now();
+                    do {
+                        const el = mathQueue.shift();
+                        if (!el) break;
+                        // 容器可能已经被重新渲染替换，跳过失效节点
+                        if (el.isConnected === false || el.classList.contains('math-done')) continue;
+                        renderMathSlot(el);
+                    } while (mathQueue.length &&
+                        performance.now() - startedAt < MATH.CHUNK_BUDGET_MS);
+                    mathQueueRunning = false;
+                    if (mathQueue.length) pumpMathQueue();
+                });
+            }
+
+            /**
+             * 收集容器内的公式占位符并加入全局队列。
+             * 所有公式都经过时间片队列，避免多条历史消息各自同步渲染导致卡顿。
+             */
+            function scheduleMathRender(container) {
+                if (!container || typeof container.querySelectorAll !== 'function') return;
+                const slots = Array.from(container.querySelectorAll('.math-slot:not(.math-done)'));
+                if (!slots.length) return;
+                for (const el of slots) {
+                    if (el._mathQueued) continue;
+                    el._mathQueued = true;
+                    mathQueue.push(el);
+                }
+                pumpMathQueue();
             }
             const streamRenderCache = {
                 key: '',
@@ -4381,12 +4687,15 @@
                 const fence = findUnclosedFenceStart(raw);
                 if (!fence) {
                     streamRenderCache.reset();
-                    return renderMarkdown(raw);
+                    // 流式阶段不渲染公式，避免每个 chunk 都重新执行 KaTeX
+                    return renderMarkdown(raw, { math: false });
                 }
                 const closedPart = raw.slice(0, fence.start);
                 if (closedPart !== streamRenderCache.key) {
                     streamRenderCache.key = closedPart;
-                    streamRenderCache.html = closedPart ? renderMarkdown(closedPart) : '';
+                    streamRenderCache.html = closedPart
+                        ? renderMarkdown(closedPart, { math: false })
+                        : '';
                 }
                 const openPart = raw.slice(fence.start);
                 const nl = openPart.indexOf('\n');
@@ -4507,6 +4816,8 @@
                     if (streaming) wrapStreamingBlock(pre, code);
                     else wrapCodeBlock(pre, code, highlight);
                 });
+                // 公式容器先插入占位符，再在空闲时间分片渲染，避免大量公式同步阻塞
+                if (!streaming) scheduleMathRender(container);
             }
             /* ==================================================================
             * 10. 组件
@@ -4583,6 +4894,59 @@
                 };
                 sync();
                 return el;
+            }
+            /** 服务端联网工具（deepseek_web_search/read_url）的参考来源列表（默认折叠） */
+            function createServerSourcesBlock(sources) {
+                const validSources = (Array.isArray(sources) ? sources : []).filter(source =>
+                    source && /^https?:\/\//i.test(source.url || ''));
+                if (!validSources.length) return null;
+
+                const wrap = h('div', { class: 'server-sources collapsed' });
+                const head = h('button', {
+                    type: 'button',
+                    class: 'server-sources-head',
+                    'aria-expanded': 'false',
+                    title: '展开参考来源',
+                });
+                head.appendChild(h('span', { class: 'server-sources-chevron', html: CHEVRON_SVG }));
+                head.appendChild(h('span', {
+                    class: 'server-sources-title',
+                    text: `参考来源（${validSources.length}）`,
+                }));
+                head.appendChild(h('span', { class: 'server-sources-hint', text: '展开' }));
+
+                const list = h('div', { class: 'server-sources-list' });
+                for (const source of validSources) {
+                    const url = String(source.url || '').trim();
+                    const link = h('a', {
+                        class: 'server-source',
+                        href: url,
+                        target: '_blank',
+                        rel: 'noopener noreferrer',
+                    });
+                    link.appendChild(h('span', {
+                        class: 'server-source-title',
+                        text: source.title || url,
+                    }));
+                    if (source.siteName) {
+                        link.appendChild(h('span', {
+                            class: 'server-source-site',
+                            text: source.siteName,
+                        }));
+                    }
+                    list.appendChild(link);
+                }
+
+                head.addEventListener('click', () => {
+                    const collapsed = wrap.classList.toggle('collapsed');
+                    head.setAttribute('aria-expanded', String(!collapsed));
+                    head.title = collapsed ? '展开参考来源' : '收起参考来源';
+                    const hint = head.querySelector('.server-sources-hint');
+                    if (hint) hint.textContent = collapsed ? '展开' : '收起';
+                });
+
+                wrap.append(head, list);
+                return wrap;
             }
             function createBranchNav(node, siblings) {
                 const idx = siblings.indexOf(node.id);
@@ -4700,6 +5064,10 @@
                             ms: rec.ms || 0,
                         }), actionEl);
                     }
+                }
+                if (node.role === 'assistant' && Array.isArray(node.serverSources) && node.serverSources.length) {
+                    const sourceBlock = createServerSourcesBlock(node.serverSources);
+                    if (sourceBlock) view.msgWrap.insertBefore(sourceBlock, actionEl);
                 }
                 return view.el;
             }
@@ -6050,20 +6418,29 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
             }
             /**
              * 一个 Responses 轮次按 DeepSeek 的要求分组：
-             * reasoning/正文 → 全部 function_call → 全部 function_call_output。
-             * DeepSeek 不接受 call/output 交错，否则会静默中断或报 No tool output。
+             * reasoning / 带引用的 message / web_search_call → 全部 function_call → 全部 function_call_output。
+             * DeepSeek 不接受 call/output 交错，也不允许丢带 signature 的联网工具 item。
              */
             function emitResponsesGroup(msgs, items, recs, node) {
-                const reasoning = [];
-                const texts = [];
+                const mainItems = []; // 保持 reasoning / web_search_call / message 的原始顺序
+                const plainTexts = [];
                 const calls = [];
                 for (const item of (Array.isArray(items) ? items : [])) {
                     if (!item || typeof item !== 'object') continue;
                     if (item.type === 'reasoning') {
-                        if (responsesItemText(item)) reasoning.push(item);
+                        if (responsesItemText(item)) mainItems.push({ kind: 'reasoning', item });
                     } else if (item.type === 'message') {
-                        const text = responsesItemText(item);
-                        if (text) texts.push(text);
+                        const hasAnnotations = Array.isArray(item.content) &&
+                            item.content.some(part => part &&
+                                Array.isArray(part.annotations) && part.annotations.length);
+                        if (hasAnnotations) {
+                            mainItems.push({ kind: 'message', item });
+                        } else {
+                            const text = responsesItemText(item);
+                            if (text) plainTexts.push(text);
+                        }
+                    } else if (item.type === 'web_search_call') {
+                        mainItems.push({ kind: 'web_search', item });
                     } else if (item.type === 'function_call') {
                         calls.push(item);
                     }
@@ -6072,8 +6449,16 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
                     callId: item.call_id || item.id || ('call_' + node.id + '_' + i),
                     item,
                 }));
-                for (const item of reasoning) msgs.push({ role: '__reasoning_item', item });
-                for (const text of texts) msgs.push({ role: 'assistant', content: text });
+                for (const entry of mainItems) {
+                    if (entry.kind === 'reasoning') {
+                        msgs.push({ role: '__reasoning_item', item: entry.item });
+                    } else if (entry.kind === 'message') {
+                        msgs.push({ role: '__message_item', item: entry.item });
+                    } else {
+                        msgs.push({ role: '__web_search_call', item: entry.item });
+                    }
+                }
+                for (const text of plainTexts) msgs.push({ role: 'assistant', content: text });
                 for (const { callId, item } of normalized) {
                     msgs.push({
                         role: '__function_call',
@@ -6090,7 +6475,7 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
                         output: rec ? (rec.text || rec.display || '（无输出）') : '（无输出）',
                     });
                 }
-                return texts.length > 0;
+                return mainItems.some(entry => entry.kind === 'message') || plainTexts.length > 0;
             }
             /** Responses 模式：按轮分组回放 reasoning / message / function_call */
             function appendResponsesHistory(msgs, node) {
@@ -6144,11 +6529,20 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
                 }
             }
             /** Chat 模式：回放助手消息与工具结果；DeepSeek 带工具时需附带 reasoning_content */
-            function appendChatHistory(msgs, node, includeReasoning) {
+            function appendChatHistory(msgs, node, includeReasoning, includeServerTools) {
                 const recs = Array.isArray(node.toolCalls)
                     ? node.toolCalls.filter(t => t && t.name)
                     : [];
                 const reasoningContent = (includeReasoning && node.reasoning) ? node.reasoning : '';
+                // 服务端联网工具字段只回传给 DeepSeek，其他协议不认识这些扩展字段
+                const serverFields = includeServerTools ? {
+                    ...(Array.isArray(node.serverToolCalls) && node.serverToolCalls.length
+                        ? { server_tool_calls: node.serverToolCalls }
+                        : {}),
+                    ...(Array.isArray(node.annotations) && node.annotations.length
+                        ? { annotations: node.annotations }
+                        : {}),
+                } : {};
                 // 新对话按轮回放：assistant(tool_calls) → tool 结果 → 最终回答，
                 // 这样带 tools 的 DeepSeek 思考模式才能拿到每一轮的 reasoning_content。
                 const rounds = Array.isArray(node.toolRounds)
@@ -6188,16 +6582,18 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
                             role: 'assistant',
                             content: node.content,
                             ...(finalReasoning ? { reasoning_content: finalReasoning } : {}),
+                            ...serverFields,
                         });
                     }
                     return;
                 }
                 if (!recs.length) {
-                    if (node.content || reasoningContent) {
+                    if (node.content || reasoningContent || Object.keys(serverFields).length) {
                         msgs.push({
                             role: 'assistant',
                             content: node.content || null,
                             ...(reasoningContent ? { reasoning_content: reasoningContent } : {}),
+                            ...serverFields,
                         });
                     }
                     return;
@@ -6215,6 +6611,7 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
                     content: node.content || null,
                     tool_calls: calls,
                     ...(reasoningContent ? { reasoning_content: reasoningContent } : {}),
+                    ...serverFields,
                 });
                 recs.forEach((rec, i) => {
                     msgs.push({
@@ -6235,12 +6632,13 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
                 // 思考关闭时不再回传，避免非思考模式收到多余的 reasoning_content。
                 const includeReasoning = isDeepSeekProvider(p) && !!thinkingEffortFor(p) &&
                     activeToolNames().length > 0;
+                const includeServerTools = isDeepSeekProvider(p);
                 for (const node of path) {
                     if (node.role === 'user') {
                         msgs.push({ role: 'user', content: buildUserContent(node.content || '', node.images) });
                     } else if (node.role === 'assistant') {
                         if (apiMode === 'responses') appendResponsesHistory(msgs, node);
-                        else appendChatHistory(msgs, node, includeReasoning);
+                        else appendChatHistory(msgs, node, includeReasoning, includeServerTools);
                     }
                 }
                 return msgs;
@@ -6252,6 +6650,7 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
                 // 只有 DeepSeek/OpenAI 兼容模式才回传 reasoning item，llama.cpp 只发送规范 message。
                 const includeReasoning = opts.includeReasoning !== false;
                 const allowSyntheticReasoning = opts.allowSyntheticReasoning !== false;
+                const allowServerTools = opts.allowServerTools !== false;
                 const systemAsMessage = opts.systemAsMessage === true;
                 // llama.cpp 只对 assistant 输入强制要求 type=message；user/system 用无 type 的
                 // 规范 EasyInputMessage 形状最稳（其 PR 测试覆盖的就是这种形状）。
@@ -6277,6 +6676,37 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
                         if (text) {
                             input.push({ type: 'reasoning', content: [{ type: 'reasoning_text', text }] });
                         }
+                        continue;
+                    }
+                    if (m.role === '__message_item') {
+                        const item = m.item || {};
+                        const parts = (Array.isArray(item.content) ? item.content : [])
+                            .filter(p => p && p.type === 'output_text' && typeof p.text === 'string')
+                            .map(p => ({
+                                type: 'output_text',
+                                text: p.text,
+                                ...(allowServerTools && Array.isArray(p.annotations) && p.annotations.length
+                                    ? { annotations: p.annotations }
+                                    : {}),
+                            }));
+                        if (!parts.length) continue;
+                        if (llamaMessages) {
+                            // llama.cpp 不识别 DeepSeek 的 citations 扩展，只保留正文
+                            input.push({
+                                type: 'message',
+                                role: 'assistant',
+                                content: parts.map(p => p.text).join(''),
+                            });
+                        } else {
+                            input.push({ type: 'message', role: 'assistant', content: parts });
+                        }
+                        continue;
+                    }
+                    if (m.role === '__web_search_call') {
+                        // 只有 DeepSeek 认识 web_search_call item
+                        if (!allowServerTools) continue;
+                        const item = m.item || {};
+                        if (item && item.type === 'web_search_call') input.push(item);
                         continue;
                     }
                     if (m.role === '__function_call') {
@@ -6419,9 +6849,27 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
                             content: [{ type: 'reasoning_text', text }],
                         });
                     } else if (item.type === 'message') {
-                        // 正文已经保存在 node.content 里，这里不再重复存储，节省 localStorage
-                        // （回放时会把 node.content 作为最后一条 assistant 消息补上）
-                        continue;
+                        // 正文默认由 node.content 保存；但带 citations（annotations）的消息
+                        // 必须保留原始 item，否则多轮对话会丢失服务端联网引用信息。
+                        const parts = (Array.isArray(item.content) ? item.content : [])
+                            .filter(p => p && p.type === 'output_text' && typeof p.text === 'string')
+                            .map(p => ({
+                                type: 'output_text',
+                                text: p.text,
+                                ...(Array.isArray(p.annotations) && p.annotations.length
+                                    ? { annotations: p.annotations }
+                                    : {}),
+                            }));
+                        if (parts.some(p => p.annotations)) {
+                            out.push({ type: 'message', role: 'assistant', content: parts });
+                        }
+                    } else if (item.type === 'web_search_call') {
+                        // DeepSeek 服务端联网工具的输出 item，多轮对话需要原样回传
+                        const keep = { type: 'web_search_call' };
+                        for (const key of ['id', 'status', 'kind', 'action', 'page', 'signature', 'error']) {
+                            if (item[key] !== undefined) keep[key] = item[key];
+                        }
+                        out.push(keep);
                     } else if (item.type === 'function_call') {
                         out.push({
                             type: 'function_call',
@@ -6439,6 +6887,75 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
             function isDeepSeekProvider(p) {
                 if (!p) return false;
                 return /deepseek/i.test([p.base_url, p.model, p.name].filter(Boolean).join(' '));
+            }
+            /* ==================================================================
+            * 19.1 DeepSeek 服务端联网工具（Web Tools）
+            * 与本地「联网搜索」完全独立：工具由服务端执行，客户端只负责声明、
+            * 保存服务端返回的 item/引用，并在多轮对话中原样回传。
+            * ================================================================== */
+            /** DeepSeek 服务端联网工具的 tools 声明（仅 DeepSeek 服务商生效） */
+            function deepseekServerTools(p) {
+                if (!p || !isDeepSeekProvider(p)) return [];
+                const tools = [];
+                if (p.server_web_search === true) tools.push({ type: 'deepseek_web_search' });
+                if (p.server_read_url === true) tools.push({ type: 'deepseek_read_url' });
+                return tools;
+            }
+            function hasDeepseekServerTools(p) {
+                return deepseekServerTools(p).length > 0;
+            }
+            /**
+             * 汇总服务端联网工具产生的参考来源（Chat 的 server_tool_calls/annotations
+             * 与 Responses 的 web_search_call/message annotations），用于在消息下方展示。
+             */
+            function collectServerSources({ serverToolCalls, annotations, responsesRounds } = {}) {
+                const map = new Map();
+                const add = (url, title, siteName) => {
+                    if (typeof url !== 'string') return;
+                    const key = url.trim();
+                    if (!key || !/^https?:\/\//i.test(key)) return;
+                    const old = map.get(key);
+                    if (!old) {
+                        map.set(key, {
+                            url: key,
+                            title: title || key,
+                            siteName: siteName || '',
+                        });
+                    } else if (old.title === old.url && title) {
+                        old.title = title;
+                    }
+                };
+                const addAnnotation = a => {
+                    const c = (a && (a.url_citation || a)) || {};
+                    add(c.url, c.title, '');
+                };
+                for (const a of (Array.isArray(annotations) ? annotations : [])) addAnnotation(a);
+                for (const step of (Array.isArray(serverToolCalls) ? serverToolCalls : [])) {
+                    for (const call of (Array.isArray(step.calls) ? step.calls : [])) {
+                        for (const s of (Array.isArray(call.sources) ? call.sources : [])) {
+                            add(s.url, s.title, s.site_name);
+                        }
+                        if (call.page) add(call.page.url, call.page.title, '');
+                    }
+                }
+                for (const round of (Array.isArray(responsesRounds) ? responsesRounds : [])) {
+                    for (const item of (Array.isArray(round) ? round : [])) {
+                        if (!item || typeof item !== 'object') continue;
+                        if (item.type === 'web_search_call') {
+                            const sources = item.action && Array.isArray(item.action.sources)
+                                ? item.action.sources : [];
+                            for (const s of sources) add(s.url, s.title, s.site_name);
+                            if (item.page) add(item.page.url, item.page.title, '');
+                        } else if (item.type === 'message') {
+                            for (const part of (Array.isArray(item.content) ? item.content : [])) {
+                                for (const a of (Array.isArray(part.annotations) ? part.annotations : [])) {
+                                    addAnnotation(a);
+                                }
+                            }
+                        }
+                    }
+                }
+                return [...map.values()].slice(0, 30);
             }
             /** 本地 llama.cpp / llama-server 的 Responses 实现与 DeepSeek 接受的 item 形状不同 */
             function isLlamaCppProvider(p) {
@@ -6490,9 +7007,11 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
              */
             function applyProviderAdvanced(body, p, apiMode) {
                 if (!p || p.advanced !== true) return;
+                // 服务端联网工具与 JSON 输出 / logprobs 互斥（DeepSeek 会返回 400）
+                const serverTools = hasDeepseekServerTools(p);
                 const topP = Number(p.top_p);
                 if (Number.isFinite(topP) && topP > 0 && topP <= 1) body.top_p = topP;
-                if (p.response_format === 'json_object') {
+                if (p.response_format === 'json_object' && !serverTools) {
                     if (apiMode === 'responses') {
                         body.text = { format: { type: 'json_object' } };
                     } else {
@@ -6504,7 +7023,7 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
                     if (stops.length === 1) body.stop = stops[0];
                     else if (stops.length > 1) body.stop = stops;
                     if (p.include_usage) body.stream_options = { include_usage: true };
-                    if (p.logprobs) {
+                    if (p.logprobs && !serverTools) {
                         body.logprobs = true;
                         const n = parseInt(p.top_logprobs, 10);
                         if (Number.isFinite(n) && n > 0) body.top_logprobs = clamp(n, 0, 20);
@@ -6518,12 +7037,16 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
                         if (p.return_title === true) body.title = { enabled: true };
                     }
                 } else {
-                    if (p.logprobs) {
+                    if (p.logprobs && !serverTools) {
                         const n = parseInt(p.top_logprobs, 10);
                         if (Number.isFinite(n) && n > 0) body.top_logprobs = clamp(n, 0, 20);
                     }
                     // Responses 使用 user 字段；user_id 是 Chat Completions 的 DeepSeek 扩展
                     if (p.user_id) body.user = p.user_id;
+                    if (isDeepSeekProvider(p)) {
+                        if (p.safety_check === 'high') body.safety_check = { level: 'high' };
+                        if (p.return_title === true) body.title = { enabled: true };
+                    }
                 }
             }
             /* ==================================================================
@@ -6606,15 +7129,17 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
                             body.thinking = { type: 'disabled' };
                         }
                         applyProviderAdvanced(body, p, 'chat');
-                        if (Array.isArray(tools) && tools.length) {
-                            body.tools = tools.map(t => ({
-                                type: 'function',
-                                function: {
-                                    name: t.name,
-                                    description: t.description,
-                                    parameters: t.inputSchema,
-                                },
-                            }));
+                        const clientTools = Array.isArray(tools) ? tools.map(t => ({
+                            type: 'function',
+                            function: {
+                                name: t.name,
+                                description: t.description,
+                                parameters: t.inputSchema,
+                            },
+                        })) : [];
+                        const allTools = [...deepseekServerTools(p), ...clientTools];
+                        if (allTools.length) {
+                            body.tools = allTools;
                             body.tool_choice = 'auto';
                         }
                         return body;
@@ -6639,6 +7164,14 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
                                 argsDelta: tc.function && tc.function.arguments,
                             }));
                         }
+                        // DeepSeek 服务端联网工具：完整结果只在最后一个 chunk 的 delta 中下发
+                        if (Array.isArray(d.server_tool_calls) && d.server_tool_calls.length) {
+                            out.serverToolCalls = d.server_tool_calls;
+                        }
+                        if (Array.isArray(d.annotations) && d.annotations.length) {
+                            out.annotations = d.annotations;
+                        }
+                        if (typeof d.title === 'string' && d.title) out.title = d.title;
                         return out;
                     },
                     fromResponse(json) {
@@ -6691,6 +7224,7 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
                         const { instructions, input } = toResponsesInput(messages, {
                             includeReasoning,
                             allowSyntheticReasoning: compat === 'deepseek',
+                            allowServerTools: compat === 'deepseek',
                             systemAsMessage: compat === 'llamacpp',
                             llamaMessages: compat === 'llamacpp',
                         });
@@ -6706,13 +7240,15 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
                         }
                         applySamplingParams(body, p, 'max_output_tokens');
                         applyProviderAdvanced(body, p, 'responses');
-                        if (Array.isArray(tools) && tools.length) {
-                            body.tools = tools.map(t => ({
-                                type: 'function',
-                                name: t.name,
-                                description: t.description,
-                                parameters: t.inputSchema,
-                            }));
+                        const clientTools = Array.isArray(tools) ? tools.map(t => ({
+                            type: 'function',
+                            name: t.name,
+                            description: t.description,
+                            parameters: t.inputSchema,
+                        })) : [];
+                        const allTools = [...deepseekServerTools(p), ...clientTools];
+                        if (allTools.length) {
+                            body.tools = allTools;
                             body.tool_choice = 'auto';
                         }
                         return body;
@@ -6876,6 +7412,9 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
                 };
                 const outputItems = [];
                 let incompleteReason = '';
+                let serverToolCalls = null;
+                let annotations = null;
+                let title = '';
                 const handle = (r) => {
                     if (!r) return;
                     if (r.content) {
@@ -6894,6 +7433,9 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
                     if (r.toolCallDeltas) r.toolCallDeltas.forEach(applyDelta);
                     if (r.fullToolCalls) r.fullToolCalls.forEach(applyFull);
                     if (r.incompleteReason) incompleteReason = r.incompleteReason;
+                    if (r.serverToolCalls) serverToolCalls = r.serverToolCalls;
+                    if (r.annotations) annotations = r.annotations;
+                    if (r.title) title = r.title;
                     // Responses：按输出顺序收集原始 item（reasoning / message / function_call）
                     if (r.outputItem) {
                         const item = r.outputItem;
@@ -6960,6 +7502,9 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
                         toolCalls,
                         outputItems: slimResponsesOutput(outputItems),
                         incompleteReason,
+                        serverToolCalls,
+                        annotations,
+                        title,
                     };
                 } catch (err) {
                     if (idleFired) {
@@ -7024,6 +7569,9 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
                     !!thinkingEffortFor(providerNow);
                 let errorMsg = null;
                 let incompleteReason = '';
+                // DeepSeek 服务端联网工具的扩展字段（Chat 协议）
+                let serverToolCalls = null;
+                let serverAnnotations = null;
                 // 思考模式输出预算过小时给出提示（实际请求会在 applySamplingParams 中临时提高）
                 const activeProvider = provider();
                 if (activeProvider && isDeepSeekProvider(activeProvider) &&
@@ -7150,6 +7698,12 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
                         if (result.incompleteReason) {
                             incompleteReason = result.incompleteReason;
                         }
+                        if (Array.isArray(result.serverToolCalls) && result.serverToolCalls.length) {
+                            serverToolCalls = result.serverToolCalls;
+                        }
+                        if (Array.isArray(result.annotations) && result.annotations.length) {
+                            serverAnnotations = result.annotations;
+                        }
                         if (!result.toolCalls.length) {
                             finalReasoning = result.reasoning || '';
                             break;
@@ -7171,6 +7725,13 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
                                 ...(deepseekChat && result.reasoning
                                     ? { reasoning_content: result.reasoning }
                                     : {}),
+                                // 服务端联网工具的扩展字段也要保留，下一轮才能还原引用/网页
+                                ...(result.serverToolCalls
+                                    ? { server_tool_calls: result.serverToolCalls }
+                                    : {}),
+                                ...(result.annotations
+                                    ? { annotations: result.annotations }
+                                    : {}),
                             });
                         } else {
                             // 工具调用后的下一轮：优先原样回传本轮 reasoning item（保留 id），
@@ -7185,7 +7746,21 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
                             } else if (result.reasoning) {
                                 workingMessages.push({ role: '__reasoning', text: result.reasoning });
                             }
-                            if (result.content) {
+                            // 服务端联网工具的输出 item 必须回传，且保持 reasoning → 搜索 → 回答的顺序
+                            for (const item of rawItems) {
+                                if (item && item.type === 'web_search_call') {
+                                    workingMessages.push({ role: '__web_search_call', item });
+                                }
+                            }
+                            const annotatedMessages = rawItems.filter(item => item &&
+                                item.type === 'message' && Array.isArray(item.content) &&
+                                item.content.some(part => part &&
+                                    Array.isArray(part.annotations) && part.annotations.length));
+                            if (annotatedMessages.length) {
+                                for (const item of annotatedMessages) {
+                                    workingMessages.push({ role: '__message_item', item });
+                                }
+                            } else if (result.content) {
                                 workingMessages.push({ role: 'assistant', content: result.content });
                             }
                         }
@@ -7298,8 +7873,16 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
                     markReasoningDone();
                 }
                 const finalText = accText.trim();
+                const serverSources = collectServerSources({
+                    serverToolCalls,
+                    annotations: serverAnnotations,
+                    responsesRounds: apiMode === 'responses' ? responsesRounds : [],
+                });
+                const hasServerToolActivity = !!serverToolCalls ||
+                    (apiMode === 'responses' && responsesRounds.some(group => group.some(item =>
+                        item && item.type === 'web_search_call')));
                 let createdNode = null;
-                if (finalText || accReasoning || toolRecords.length) {
+                if (finalText || accReasoning || toolRecords.length || hasServerToolActivity) {
                     const node = appendNode(conv, fromNodeId, {
                         role: 'assistant',
                         content: finalText,
@@ -7309,6 +7892,9 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
                         toolCalls: toolRecords,
                         toolRounds,
                         finalReasoning,
+                        serverToolCalls: serverToolCalls || null,
+                        annotations: serverAnnotations || null,
+                        serverSources: serverSources.length ? serverSources : null,
                         // 按轮保存原始输出 item，回放时才能按 DeepSeek 要求分组
                         responsesRounds: apiMode === 'responses' ? responsesRounds : null,
                     });
@@ -7324,6 +7910,10 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
                         view.body.innerHTML = '<div class="msg-error">模型只执行了工具调用，没有输出正文。</div>';
                     }
                     attachFinalActions(view, conv, node, finalText);
+                    if (serverSources.length) {
+                        const sourceBlock = createServerSourcesBlock(serverSources);
+                        if (sourceBlock) view.msgWrap.insertBefore(sourceBlock, view.actions);
+                    }
                     if (errorMsg) toast('请求失败：' + errorMsg.split('\n')[0], 'error', 4200);
                     saveState();
                     renderConvList();
@@ -7878,6 +8468,8 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
                         temperature: Number.isFinite(tempRaw) ? clamp(tempRaw, 0, 2) : 0.7,
                         max_tokens: mt,
                         reasoning_effort: isValidEffort(re) ? re : '',
+                        server_web_search: checked('[name="server_web_search"]'),
+                        server_read_url: checked('[name="server_read_url"]'),
                         /* ---- 高级选项 ---- */
                         advanced: checked('[name="advanced"]'),
                         thinking_mode: THINKING_MODES.includes(get('[name="thinking_mode"]'))
@@ -8010,6 +8602,17 @@ ${chips.map(c => `<button class="suggest-chip" type="button">${escapeHtml(c)}</b
                                 { value: 'high', label: '高强度（high）' },
                                 { value: 'max', label: '最高强度（max）' },
                             ],
+                        }),
+                        /* DeepSeek 服务端联网工具：由服务端执行，和本地「联网搜索」互不影响 */
+                        makeField({
+                            label: '服务端联网搜索（deepseek_web_search）', name: 'server_web_search',
+                            type: 'checkbox', full: true, value: p.server_web_search === true,
+                            hint: '仅 DeepSeek 生效：由模型自主决定是否搜索，服务端完成搜索并返回引用；不经过本地搜索接口。开启后 JSON 输出/logprobs 高级选项不会生效。',
+                        }),
+                        makeField({
+                            label: '服务端阅读链接（deepseek_read_url）', name: 'server_read_url',
+                            type: 'checkbox', full: true, value: p.server_read_url === true,
+                            hint: '仅 DeepSeek 生效：模型会自动读取用户消息中的链接；网页内容由服务端抓取。',
                         }),
                     ];
                     const advancedToggle = makeField({

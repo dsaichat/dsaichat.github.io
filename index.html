@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content">
     <meta name="color-scheme" content="light dark">
     <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
     <meta name="theme-color" content="#0b0d12" media="(prefers-color-scheme: dark)">
@@ -3055,9 +3055,9 @@
                     </div>
                 </div>
                 <div class="input-hint">
-                    <span>AI 可能会犯错，请核查重要信息</span>
+                    <span class="hint-sep"><a target="blank" href="#">请作者喝奶茶</a></span>
                     <span class="hint-sep">·</span>
-                    <span class="token-stats" id="tokenStats" title="发送消息后显示">上下文 ≈ <b>0</b> tokens</span>
+                    <span class="hint-sep" id="tokenStats" title="发送消息后显示">上下文 ≈ <b>0</b> tokens</span>
                 </div>
             </div>
         </main>
@@ -3286,8 +3286,8 @@
                 },
                 {
                     name: 'llama-cpp',
-                    api_key: 'sk-123456789123456789',
-                    base_url: 'http://192.168.101.11:8888/v1',
+                    api_key: '',
+                    base_url: 'http://127.0.0.1:8080/v1',
                     model: 'Qwen3.5-9B-Q4_K_M',
                     api_mode: 'chat',
                     temperature: 0.7,
